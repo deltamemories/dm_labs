@@ -2,7 +2,7 @@ from string import ascii_lowercase
 from pprint import pprint
 
 def read_text(filepath: str) -> str:
-	with open('text.txt', 'r', encoding='UTF-8') as f:
+	with open(filepath, 'r', encoding='UTF-8') as f:
 		raw_text = f.read()
 		raw_text.replace('\n', '')
 		raw_text.replace('\t', '')
@@ -20,6 +20,7 @@ def read_text(filepath: str) -> str:
 
 
 def static_analyze_text(text: str) -> tuple[dict, dict, dict, dict]:
+	text_length = len(text)
 	char_counts = {}
 
 	for char in text:
@@ -27,7 +28,7 @@ def static_analyze_text(text: str) -> tuple[dict, dict, dict, dict]:
 
 	char_frequency = {}
 	for key in char_counts:
-		char_frequency[key] = char_counts.get(key, 0) / len(text)
+		char_frequency[key] = char_counts.get(key, 0) / text_length
 
 	pair_counts = {}
 	for i in range(len(text) - 1):
@@ -36,9 +37,8 @@ def static_analyze_text(text: str) -> tuple[dict, dict, dict, dict]:
 
 	pair_frequency = {}
 	for key in pair_counts:
-		pair_frequency[key] = pair_counts.get(key, 0) / len(text)
+		pair_frequency[key] = pair_counts.get(key, 0) / text_length
 
-	text_length = len(text)
 	return char_frequency, pair_frequency, char_counts, pair_counts
 
 
