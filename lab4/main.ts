@@ -119,6 +119,37 @@ class OrderedQueue {
     private sort() {
         this.queue.sort((a: HuffmanNode, b: HuffmanNode) => a.weight - b.weight)
     }
+
+    public push(node: HuffmanNode) {
+        this.queue.push(node)
+        this.sort()
+    }
+
+    public get(index: number): HuffmanNode | undefined
+
+    public get(startIndex: number, endIndex: number): HuffmanNode[]
+
+    public get(startIndex: number, endIndex?: number): HuffmanNode | HuffmanNode[] | undefined {
+        if (endIndex === undefined) {
+            return this.queue[startIndex]
+        } else {
+            return this.queue.slice(startIndex, endIndex)
+        }
+    }
+
+    public remove(startIndex: number): HuffmanNode | undefined
+
+    public remove(startIndex: number, count: number): HuffmanNode[]
+
+    public remove(startIndex: number, count?: number): HuffmanNode | HuffmanNode[] | undefined {
+        if (count === undefined) {
+            return this.queue.splice(startIndex, 1)
+        } else {
+            return this.queue.splice(startIndex, count)
+        }
+    }
+
+
 }
 
 const testMap = new Map([['a', 16], ['o', 10], ['b', 4], ['f', 2]])
@@ -128,3 +159,5 @@ console.log(testMap)
 const testQueue = new OrderedQueue(testMap)
 
 console.log(testQueue)
+
+console.log(testQueue.get(0, 2))
