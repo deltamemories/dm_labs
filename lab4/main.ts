@@ -37,7 +37,7 @@ interface StaticAnalyzeResult {
     pairsFrequencies: Map<string, number>
 }
 
-
+// 1. of task
 function staticAnalyzeText(text: string): StaticAnalyzeResult {
     const textLen = text.length
 
@@ -77,4 +77,54 @@ function staticAnalyzeText(text: string): StaticAnalyzeResult {
 const rawText = readText('text.txt')
 const text = formatText(rawText)
 const aaaa = staticAnalyzeText(text)
-console.log(aaaa)
+console.log(aaaa.charCounts)
+
+
+// 2. of task
+
+type HuffmanNode = LeafNode | InternalNode
+
+interface BaseNode {
+    weight: number
+}
+
+interface LeafNode extends BaseNode {
+    char: string
+}
+
+interface InternalNode extends BaseNode {
+    left: LeafNode
+    right: LeafNode
+}
+
+function createLeafNode(char: string, freq: number): LeafNode {
+    return { char: char, weight: freq }
+}
+
+function createInternalNode(freq: number, left: LeafNode, right: LeafNode): InternalNode {
+    return { weight: freq, left: left, right: right }
+}
+
+class OrderedQueue {
+    queue: HuffmanNode[] = []
+
+    constructor(charFrequencies: Map<string, number>) {
+        for (const [char, freq] of charFrequencies) {
+            this.queue.push(createLeafNode(char, freq))
+        }
+
+        this.sort()
+    }
+
+    private sort() {
+        this.queue.sort((a: HuffmanNode, b: HuffmanNode) => a.weight - b.weight)
+    }
+}
+
+const testMap = new Map([['a', 16], ['o', 10], ['b', 4], ['f', 2]])
+
+console.log(testMap)
+
+const testQueue = new OrderedQueue(testMap)
+
+console.log(testQueue)
