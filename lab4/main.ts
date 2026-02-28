@@ -93,16 +93,16 @@ interface LeafNode extends BaseNode {
 }
 
 interface InternalNode extends BaseNode {
-    left: LeafNode
-    right: LeafNode
+    left: HuffmanNode
+    right: HuffmanNode
 }
 
-function createLeafNode(char: string, freq: number): LeafNode {
-    return { char: char, weight: freq }
+function createLeafNode(char: string, weight: number): LeafNode {
+    return { char: char, weight: weight }
 }
 
-function createInternalNode(freq: number, left: LeafNode, right: LeafNode): InternalNode {
-    return { weight: freq, left: left, right: right }
+function createInternalNode(weight: number, left: HuffmanNode, right: HuffmanNode): InternalNode {
+    return { weight: weight, left: left, right: right }
 }
 
 class OrderedQueue {
@@ -148,9 +148,20 @@ class OrderedQueue {
             return this.queue.splice(startIndex, count)
         }
     }
-
-
 }
+
+
+function generateHuffmanTree(queue: OrderedQueue): HuffmanNode {
+    while (queue.get(0, 2).length > 1) {
+        const [firstNode, secondNode] = queue.get(0, 2)
+        const internalNode = createInternalNode(firstNode!.weight + secondNode!.weight, firstNode!, secondNode!)
+        queue.remove(0, 2)
+        queue.push(internalNode)
+    }
+
+    return queue.get(0)!
+}
+
 
 const testMap = new Map([['a', 16], ['o', 10], ['b', 4], ['f', 2]])
 
@@ -161,3 +172,5 @@ const testQueue = new OrderedQueue(testMap)
 console.log(testQueue)
 
 console.log(testQueue.get(0, 2))
+
+console.log(generateHuffmanTree(testQueue))
