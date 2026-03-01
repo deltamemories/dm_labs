@@ -1,9 +1,6 @@
 import * as fs from 'fs'
 
 
-const asciiLowercase = 'abcdefghijklmnopqrstuvwxyz';
-
-
 function readText(filepath: string) {
     try {
         return fs.readFileSync(filepath, 'utf8')
@@ -26,6 +23,7 @@ interface StaticAnalyzeResult {
     charFrequencies: Map<string, number>
     pairsCounts: Map<string, number>
     pairsFrequencies: Map<string, number>
+    textLength: number
 }
 
 // 1. of task
@@ -60,7 +58,8 @@ function staticAnalyzeText(text: string): StaticAnalyzeResult {
         charCounts: charCounts,
         charFrequencies: charFreq,
         pairsCounts: pairCounts,
-        pairsFrequencies: pairFreq
+        pairsFrequencies: pairFreq,
+        textLength: textLen
     }
 }
 
@@ -104,7 +103,7 @@ class OrderedQueue {
     }
 
     private sort() {
-        this.queue.sort((a: HuffmanNode, b: HuffmanNode) => a.weight - b.weight)
+        this.queue.sort((a: HuffmanNode, b: HuffmanNode) => a.weight - b.weight) // can be optimized
     }
 
     public push(node: HuffmanNode) {
@@ -179,8 +178,10 @@ const staticAnalyzedText = staticAnalyzeText(text)
 
 const queue = new OrderedQueue(staticAnalyzedText.charFrequencies)
 const tree = generateHuffmanTree(queue)
+
+let codes = undefined
 if (tree !== undefined) {
-    const codes = calculateBinaryCodes(tree)
+    codes = calculateBinaryCodes(tree)
     console.log(codes)
 }
 
@@ -196,4 +197,44 @@ function generateFixedLengthCodes(chars: string[]): Map<string, string> {
     return codes
 }
 
-console.log(generateFixedLengthCodes(asciiLowercase.split('')))
+console.log(generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray()))
+
+
+/** Entropy in bits */
+type Entropy = number
+
+/** Length of message in bits */
+type MessageLength = number
+
+function calculateShannonEntropy(staticAnalyze: StaticAnalyzeResult): Entropy {
+    let entropy: Entropy = 0
+    for (const freq of staticAnalyze.charFrequencies.values()) {
+        entropy -= freq * Math.log2(freq)
+    }
+
+    return entropy
+}
+
+function calculateShannonTotalLength(staticAnalyze: StaticAnalyzeResult, entropy: Entropy): MessageLength {
+    return staticAnalyze.textLength * entropy
+}
+
+function encodeText(text: string, codes: Map<string, string>): string {
+    let encodedText = ''
+
+    for (const char of text) {
+        if (codes.get(char) === undefined) {
+            throw new Error(`Can't find code for character: ${char}`)
+        }
+
+        encodedText += codes.get(char)
+    }
+
+    return encodedText
+}
+
+const fixedLengthCodes = generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray())
+
+console.log("Huffman:", encodeText(text, codes!).length, "bits")
+console.log("Fixed:", encodeText(text, fixedLengthCodes).length, "bits")
+console.log("Shannon:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText))), "bits")
