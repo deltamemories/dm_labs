@@ -151,7 +151,7 @@ class OrderedQueue {
 }
 
 
-function generateHuffmanTree(queue: OrderedQueue): HuffmanNode {
+function generateHuffmanTree(queue: OrderedQueue): HuffmanNode | undefined {
     while (queue.get(0, 2).length > 1) {
         const [firstNode, secondNode] = queue.get(0, 2)
         const internalNode = createInternalNode(firstNode!.weight + secondNode!.weight, firstNode!, secondNode!)
@@ -159,7 +159,7 @@ function generateHuffmanTree(queue: OrderedQueue): HuffmanNode {
         queue.push(internalNode)
     }
 
-    return queue.get(0)!
+    return queue.get(0)
 }
 
 
