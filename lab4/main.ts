@@ -16,17 +16,8 @@ function readText(filepath: string) {
 function formatText(text: string) {
     text = text.trim()
     text = text.toLowerCase()
-    text = text.replaceAll('\n', '')
-    text = text.replaceAll('\t', '')
-    text = text.replaceAll(' ', '')
-
-    let resultText = ''
-    for (const char of text) {
-        if (asciiLowercase.includes(char)) {
-            resultText += char
-        }
-    }
-    return resultText
+    text = text.replaceAll(/[^a-z ]/g, '')
+    return text
 }
 
 
@@ -48,8 +39,8 @@ function staticAnalyzeText(text: string): StaticAnalyzeResult {
     }
 
     let charFreq = new Map<string, number>()
-    for (const char of charCounts.keys()) {
-        charFreq.set(char, charCounts.get(char)! / textLen)
+    for (const [char, count] of charCounts) {
+        charFreq.set(char, count / textLen)
     }
 
     let pairCounts = new Map<string, number>()
@@ -61,8 +52,8 @@ function staticAnalyzeText(text: string): StaticAnalyzeResult {
 
     let pairFreq = new Map<string, number>()
 
-    for (const pair of pairCounts.keys()) {
-        pairFreq.set(pair, pairCounts.get(pair)! / textLen)
+    for (const [pair, count] of pairCounts) {
+        pairFreq.set(pair, count / (textLen - 1))
     }
 
     return {
