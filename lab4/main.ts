@@ -193,16 +193,16 @@ if (tree !== undefined) {
     console.log(codes)
 }
 
-function generateFixedLenghtCodes(chars: string[]): Map<string, string> {
-    const codeLenght = Math.ceil(Math.log2(chars.length))
+function generateFixedLengthCodes(chars: string[]): Map<string, string> {
+    const codeLength = Math.ceil(Math.log2(chars.length))
     const codes = new Map<string, string>()
 
     for (const [index, char] of chars.entries()) {
-        const binaryCode = index.toString(2).padStart(codeLenght, '0')
+        const binaryCode = index.toString(2).padStart(codeLength, '0')
         codes.set(char, binaryCode)
     }
 
     return codes
 }
 
-console.log(generateFixedLenghtCodes(asciiLowercase.split('')))
+console.log(generateFixedLengthCodes(asciiLowercase.split('')))
