@@ -74,14 +74,7 @@ function staticAnalyzeText(text: string): StaticAnalyzeResult {
 }
 
 
-const rawText = readText('text.txt')
-const text = formatText(rawText)
-const aaaa = staticAnalyzeText(text)
-console.log(aaaa.charCounts)
-
-
 // 2. of task
-
 type HuffmanNode = LeafNode | InternalNode
 
 interface BaseNode {
@@ -89,21 +82,24 @@ interface BaseNode {
 }
 
 interface LeafNode extends BaseNode {
+    type: 'leaf'
     char: string
 }
 
 interface InternalNode extends BaseNode {
+    type: 'internal'
     left: HuffmanNode
     right: HuffmanNode
 }
 
 function createLeafNode(char: string, weight: number): LeafNode {
-    return { char: char, weight: weight }
+    return { type: 'leaf', char: char, weight: weight }
 }
 
 function createInternalNode(weight: number, left: HuffmanNode, right: HuffmanNode): InternalNode {
-    return { weight: weight, left: left, right: right }
+    return { type: 'internal', weight: weight, left: left, right: right }
 }
+
 
 class OrderedQueue {
     queue: HuffmanNode[] = []
@@ -163,14 +159,36 @@ function generateHuffmanTree(queue: OrderedQueue): HuffmanNode | undefined {
 }
 
 
-const testMap = new Map([['a', 16], ['o', 10], ['b', 4], ['f', 2]])
+function calculateBinaryCodes(tree: HuffmanNode): Map<string, string> {
+    let codes = new Map<string, string>()
+    if (tree.type === 'leaf') {
+        codes.set(tree.char, '0')
+        return codes
+    }
 
-console.log(testMap)
+    calculateBinaryCodeRecursive(tree, '', codes)
+    return codes
+}
 
-const testQueue = new OrderedQueue(testMap)
+function calculateBinaryCodeRecursive(tree: HuffmanNode, code: string, codes: Map<string, string>) {
+    if (tree.type === 'leaf') {
+        codes.set(tree.char, code)
+    } else {
+        calculateBinaryCodeRecursive(tree.left, code + '0', codes)
+        calculateBinaryCodeRecursive(tree.right, code + '1', codes)
+    }
 
-console.log(testQueue)
+    return codes
+}
 
-console.log(testQueue.get(0, 2))
 
-console.log(generateHuffmanTree(testQueue))
+const rawText = readText('text.txt')
+const text = formatText(rawText)
+const staticAnalyzedText = staticAnalyzeText(text)
+
+const queue = new OrderedQueue(staticAnalyzedText.charFrequencies)
+const tree = generateHuffmanTree(queue)
+if (tree !== undefined) {
+    const codes = calculateBinaryCodes(tree)
+    console.log(codes)
+}
