@@ -220,17 +220,18 @@ function calculateShannonTotalLength(staticAnalyze: StaticAnalyzeResult, entropy
 }
 
 function encodeText(text: string, codes: Map<string, string>): string {
-    let encodedText = ''
+    const encodedText: string[] = new Array(text.length)
 
-    for (const char of text) {
-        if (codes.get(char) === undefined) {
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i]!;
+        const code = codes.get(char);
+        if (code === undefined) {
             throw new Error(`Can't find code for character: ${char}`)
         }
-
-        encodedText += codes.get(char)
+        encodedText[i] = code
     }
 
-    return encodedText
+    return encodedText.join('')
 }
 
 const fixedLengthCodes = generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray())
