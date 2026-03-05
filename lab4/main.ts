@@ -239,3 +239,66 @@ const fixedLengthCodes = generateFixedLengthCodes(staticAnalyzedText.charCounts.
 console.log("Huffman:", encodeText(text, codes!).length, "bits")
 console.log("Fixed:", encodeText(text, fixedLengthCodes).length, "bits")
 console.log("Shannon:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText))), "bits")
+
+
+// 3. of task
+/** Tokens map for encoding */
+type TokensEncodeMap = Map<string, number>
+
+/** Tokens map for decoding */
+type TokensDecodeMap = Map<number, string>
+
+
+class LempelZivWelchCoder {
+    tokensEncodeMap: TokensEncodeMap = new Map()
+    readonly text: string
+    readonly chars: string[]
+
+    constructor(text: string, staticAnalyze: StaticAnalyzeResult) {
+        this.text = text
+        this.chars = staticAnalyze.charCounts.keys().toArray()
+    }
+
+    public encode(): number[] {
+        this.initTokensEncodeMap()
+
+        const encodedText: number[] = []
+        let phrase = ''
+
+        for (const char of this.text) {
+            const currentPhrase = phrase + char
+
+            if (this.tokensEncodeMap.has(currentPhrase)) {
+                phrase = currentPhrase
+            } else {
+                encodedText.push(this.tokensEncodeMap.get(phrase)!)
+                this.tokensEncodeMap.set(currentPhrase, this.tokensEncodeMap.size)
+                phrase = char
+            }
+        }
+
+        if (phrase !== '') {
+            encodedText.push(this.tokensEncodeMap.get(phrase)!)
+        }
+
+        return encodedText
+    }
+
+    private initTokensEncodeMap() {
+        for (let i = 0; i < 256; i++) {
+            this.tokensEncodeMap.set(String.fromCharCode(i), i)
+        }
+    }
+}
+
+
+class LZW {
+    public encode(text: string, staticAnalyze: StaticAnalyzeResult) {
+        return new LempelZivWelchCoder(text, staticAnalyze).encode()
+    }
+}
+
+const lzw = new LZW()
+
+const lzwText = lzw.encode('ababababooooabooooaboo', staticAnalyzeText('ababababooooabooooaboo'))
+console.log(lzwText)
