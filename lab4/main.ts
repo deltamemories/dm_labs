@@ -26,6 +26,7 @@ interface StaticAnalyzeResult {
     textLength: number
 }
 
+
 // 1. of task
 function staticAnalyzeText(text: string): StaticAnalyzeResult {
     const textLen = text.length
@@ -172,19 +173,6 @@ function calculateBinaryCodeRecursive(tree: HuffmanNode, code: string, codes: Ma
 }
 
 
-const rawText = readText('text.txt')
-const text = formatText(rawText)
-const staticAnalyzedText = staticAnalyzeText(text)
-
-const queue = new OrderedQueue(staticAnalyzedText.charFrequencies)
-const tree = generateHuffmanTree(queue)
-
-let codes = undefined
-if (tree !== undefined) {
-    codes = calculateBinaryCodes(tree)
-    console.log(codes)
-}
-
 function generateFixedLengthCodes(chars: string[]): Map<string, string> {
     const codeLength = Math.ceil(Math.log2(chars.length))
     const codes = new Map<string, string>()
@@ -197,14 +185,13 @@ function generateFixedLengthCodes(chars: string[]): Map<string, string> {
     return codes
 }
 
-console.log(generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray()))
-
 
 /** Entropy in bits */
 type Entropy = number
 
 /** Length of message in bits */
 type MessageLength = number
+
 
 function calculateShannonEntropy(staticAnalyze: StaticAnalyzeResult): Entropy {
     let entropy: Entropy = 0
@@ -218,6 +205,7 @@ function calculateShannonEntropy(staticAnalyze: StaticAnalyzeResult): Entropy {
 function calculateShannonTotalLength(staticAnalyze: StaticAnalyzeResult, entropy: Entropy): MessageLength {
     return staticAnalyze.textLength * entropy
 }
+
 
 function encodeText(text: string, codes: Map<string, string>): string {
     const encodedText: string[] = new Array(text.length)
@@ -233,12 +221,6 @@ function encodeText(text: string, codes: Map<string, string>): string {
 
     return encodedText.join('')
 }
-
-const fixedLengthCodes = generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray())
-
-console.log("Huffman:", encodeText(text, codes!).length, "bits")
-console.log("Fixed:", encodeText(text, fixedLengthCodes).length, "bits")
-console.log("Shannon:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText))), "bits")
 
 
 // 3. of task
@@ -297,6 +279,30 @@ class LZW {
         return new LempelZivWelchCoder(text, staticAnalyze).encode()
     }
 }
+
+
+const rawText = readText('text.txt')
+const text = formatText(rawText)
+const staticAnalyzedText = staticAnalyzeText(text)
+
+const queue = new OrderedQueue(staticAnalyzedText.charFrequencies)
+const tree = generateHuffmanTree(queue)
+
+let codes = undefined
+if (tree !== undefined) {
+    codes = calculateBinaryCodes(tree)
+    console.log(codes)
+}
+
+
+console.log(generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray()))
+
+const fixedLengthCodes = generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray())
+
+console.log("Huffman:", encodeText(text, codes!).length, "bits")
+console.log("Fixed:", encodeText(text, fixedLengthCodes).length, "bits")
+console.log("Shannon:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText))), "bits")
+
 
 const lzw = new LZW()
 
