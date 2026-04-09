@@ -14,6 +14,7 @@ function formatText(text: string) {
     text = text.trim()
     text = text.toLowerCase()
     text = text.replaceAll(/[^a-z ]/g, '')
+    if (text.length % 2 != 0) text += ' '
     return text
 }
 
@@ -44,8 +45,12 @@ function staticAnalyzeText(text: string): StaticAnalyzeResult {
 
     let pairCounts = new Map<string, number>()
 
-    for (let i = 0; i<textLen-1; i++) {
+    for (let i = 0; i<textLen-1; i+=2) {
         const pair = text.slice(i, i + 2)
+        pairCounts.set(pair, pairCounts.get(pair) ? pairCounts.get(pair)! + 1 : 1)
+    }
+    if (textLen > 1 && textLen%2!=0) {
+        const pair = text.slice(textLen-2, textLen)
         pairCounts.set(pair, pairCounts.get(pair) ? pairCounts.get(pair)! + 1 : 1)
     }
 
@@ -208,13 +213,18 @@ function calculateShannonTotalLength(staticAnalyze: StaticAnalyzeResult, entropy
 
 
 function encodeText(text: string, codes: Map<string, string>): string {
-    const encodedText: string[] = new Array(text.length)
+    if (codes.size === 0) {
+        throw new Error("Map with codes should not be empty")
+    }
 
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i]!;
-        const code = codes.get(char);
+    const codeLength = codes.keys().next().value!.length
+    const encodedText: string[] = new Array(text.length / codeLength)
+
+    for (let i = 0; i < text.length; i+=codeLength) {
+        const token = text.slice(i, i+codeLength)!;
+        const code = codes.get(token);
         if (code === undefined) {
-            throw new Error(`Can't find code for character: ${char}`)
+            throw new Error(`Can't find code for token: ${token}`)
         }
         encodedText[i] = code
     }
@@ -227,10 +237,6 @@ function encodeText(text: string, codes: Map<string, string>): string {
 /** Tokens map for encoding */
 type TokensEncodeMap = Map<string, number>
 
-/** Tokens map for decoding */
-type TokensDecodeMap = Map<number, string>
-
-
 class LempelZivWelchCoder {
     tokensEncodeMap: TokensEncodeMap = new Map()
     readonly text: string
@@ -241,7 +247,7 @@ class LempelZivWelchCoder {
         this.chars = staticAnalyze.charCounts.keys().toArray()
     }
 
-    public encode(): number[] {
+    public encode(): string {
         this.initTokensEncodeMap()
 
         const encodedText: number[] = []
@@ -263,7 +269,11 @@ class LempelZivWelchCoder {
             encodedText.push(this.tokensEncodeMap.get(phrase)!)
         }
 
-        return encodedText
+        return this.encodeDigitsCodes(encodedText)
+    }
+
+    private encodeDigitsCodes(digits: number[]): string {
+
     }
 
     private initTokensEncodeMap() {
@@ -281,9 +291,10 @@ class LZW {
 }
 
 
-const rawText = readText('text.txt')
+const rawText = readText('smallText.txt')
 const text = formatText(rawText)
 const staticAnalyzedText = staticAnalyzeText(text)
+console.log("staticAnalyzedText:", staticAnalyzedText)
 
 const queue = new OrderedQueue(staticAnalyzedText.charFrequencies)
 const tree = generateHuffmanTree(queue)
@@ -291,20 +302,29 @@ const tree = generateHuffmanTree(queue)
 let codes = undefined
 if (tree !== undefined) {
     codes = calculateBinaryCodes(tree)
-    console.log(codes)
+    console.log("Huffman codes:", codes)
 }
 
+
+const queuePairs = new OrderedQueue(staticAnalyzedText.pairsFrequencies)
+const treePairs = generateHuffmanTree(queuePairs)
+let codesPairs = undefined
+if (treePairs !== undefined) {
+    codesPairs = calculateBinaryCodes(treePairs)
+    console.log("Huffman codes pairs:", codesPairs)
+}
 
 console.log(generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray()))
 
 const fixedLengthCodes = generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray())
 
 console.log("Huffman:", encodeText(text, codes!).length, "bits")
+console.log("Huffman pairs:", encodeText(text, codesPairs!).length, "bits")
 console.log("Fixed:", encodeText(text, fixedLengthCodes).length, "bits")
 console.log("Shannon:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText))), "bits")
 
 
 const lzw = new LZW()
 
-const lzwText = lzw.encode('ababababooooabooooaboo', staticAnalyzeText('ababababooooabooooaboo'))
+const lzwText = lzw.encode(text, staticAnalyzeText(text))
 console.log(lzwText)
