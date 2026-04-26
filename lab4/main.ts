@@ -57,7 +57,7 @@ function staticAnalyzeText(text: string): StaticAnalyzeResult {
     let pairFreq = new Map<string, number>()
 
     for (const [pair, count] of pairCounts) {
-        pairFreq.set(pair, count / (textLen - 1))
+        pairFreq.set(pair, count / (textLen / 2))
     }
 
     return {
@@ -198,9 +198,9 @@ type Entropy = number
 type MessageLength = number
 
 
-function calculateShannonEntropy(staticAnalyze: StaticAnalyzeResult): Entropy {
+function calculateShannonEntropy(frequencies: Map<string, number>): Entropy {
     let entropy: Entropy = 0
-    for (const freq of staticAnalyze.charFrequencies.values()) {
+    for (const freq of frequencies.values()) {
         entropy -= freq * Math.log2(freq)
     }
 
@@ -273,7 +273,15 @@ class LempelZivWelchCoder {
     }
 
     private encodeDigitsCodes(digits: number[]): string {
+        const set = new Set(digits)
+        const codeLength = Math.ceil(Math.log2(set.size))
+        const answer: string[] = []
 
+        for (const digit of digits) {
+            // console.log('code:', digit, digit.toString(2).padStart(codeLength, '0'))
+            answer.push(digit.toString(2).padStart(codeLength, '0'))
+        }
+        return answer.join('')
     }
 
     private initTokensEncodeMap() {
@@ -291,7 +299,7 @@ class LZW {
 }
 
 
-const rawText = readText('smallText.txt')
+const rawText = readText('text.txt')
 const text = formatText(rawText)
 const staticAnalyzedText = staticAnalyzeText(text)
 console.log("staticAnalyzedText:", staticAnalyzedText)
@@ -317,14 +325,15 @@ if (treePairs !== undefined) {
 console.log(generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray()))
 
 const fixedLengthCodes = generateFixedLengthCodes(staticAnalyzedText.charCounts.keys().toArray())
+const fixedLengthCodesPairs = generateFixedLengthCodes(staticAnalyzedText.pairsCounts.keys().toArray())
+
+const lzw = new LZW()
+const lzwText = lzw.encode(text, staticAnalyzeText(text))
 
 console.log("Huffman:", encodeText(text, codes!).length, "bits")
 console.log("Huffman pairs:", encodeText(text, codesPairs!).length, "bits")
 console.log("Fixed:", encodeText(text, fixedLengthCodes).length, "bits")
-console.log("Shannon:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText))), "bits")
-
-
-const lzw = new LZW()
-
-const lzwText = lzw.encode(text, staticAnalyzeText(text))
-console.log(lzwText)
+console.log("Fided pairs:", encodeText(text, fixedLengthCodesPairs).length, "bits")
+console.log("Shannon:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText.charFrequencies))), "bits")
+console.log("Shannon pairs:", Math.ceil(calculateShannonTotalLength(staticAnalyzedText, calculateShannonEntropy(staticAnalyzedText.pairsFrequencies) / 2)), "bits")
+console.log('LZW:', lzwText.length, 'bits')
